@@ -1,5 +1,19 @@
 # Testing an idea with api, ui & db
 
+¯\_(ツ)_/¯ need code ? 🦝
+
+```bash
+git clone https://github.com/ullaskunder3/test-component.git
+```
+
+```bash
+npm install
+```
+
+```bash
+npm start
+```
+
 motive:
 
 I was curious how those `URL preview` work in most of the social networking site
