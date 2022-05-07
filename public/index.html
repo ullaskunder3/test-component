@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        *,
+        *::after,
+        *::before {
+            border: none;
+            outline: none;
+            list-style-type: none;
+            box-sizing: border-box;
+        }
+
+        .data {
+            max-height: 450px;
+            overflow: auto;
+        }
+        @media (max-height: 740px){
+            .data{
+                max-height: 250px;
+                overflow: auto;
+            }
+        }
+
+        .user-post {
+            font-size: 1rem;
+            background-color: rgb(243, 250, 255);
+            padding: 1rem;
+            margin-top: 1rem;
+            position: relative;
+            animation: .6s ease;
+        }
+
+        .user-post a {
+            display: block;
+            cursor: pointer;
+        }
+
+        .wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            height: auto;
+        }
+
+        textarea {
+            height: 200px;
+            width: 100%;
+            max-height: 200px;
+            min-height: 90%;
+            position: relative;
+            border: none;
+            resize: none;
+            border-left: 2px solid #555;
+            padding-left: 1rem;
+            font-size: 1.1rem;
+            /* background-color: rgba(248, 223, 223, 0.288); */
+            background-color: rgba(223, 237, 250, 0.288);
+        }
+
+        textarea:focus {
+            border: none;
+            resize: none;
+            border-left: 2px solid #555;
+        }
+
+        textarea:active {
+            border: none;
+            resize: none;
+            border-left: 2px solid #555;
+        }
+
+        input {
+            position: absolute;
+            bottom: 50px;
+            left: -25px;
+            border-radius: .9rem;
+            margin-left: 2.5rem;
+            width: 90%;
+            text-align: left;
+            padding: .5rem;
+            border: 1px solid rgb(122, 115, 115);
+        }
+
+        button {
+            padding: 1rem 1.5rem;
+        }
+
+        .is-empty {
+            background-color: rgb(215, 231, 250);
+            padding: 1rem;
+            color: #555;
+            text-align: center;
+            font-weight: 600;
+            font-family: sans-serif;
+            /* display: none; */
+        }
+
+        .delete {
+            cursor: pointer;
+            position: absolute;
+            right: 1rem;
+            top: 40%;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <h1>Test component</h1>
+    <h3>GET Posts:</h3>
+    <div class="data">
+        <div class="is-empty">
+            There is no post yet
+        </div>
+    </div>
+    <h3>POST</h3>
+    <div class="wrapper">
+        <textarea id="post-content" placeholder="text content"></textarea>
+        <input type="url" id="post-link" placeholder="your link">
+        <button id="post-btn">Post</button>
+    </div>
+    <script>
+        const dataElm = document.querySelector('.data');
+        const postContent = document.querySelector('#post-content')
+        const postLink = document.querySelector('#post-link')
+        const postBtn = document.querySelector('#post-btn');
+        const isEmpty = document.querySelector('.is-empty');
+
+        async function getData(url) {
+            const response = await fetch(url);
+            var data = await response.json();
+            console.log(data);
+            console.log(data.length === 0 ? "no data" : "data");
+            if (data.length === 0) {
+                isEmpty.style.display = "block"
+            } else {
+                isEmpty.remove();
+                data.forEach(obj => {
+                    // console.log(obj._id);
+                    let newDiv = document.createElement('p')
+                    let linkElm = document.createElement('a')
+                    let delElm = document.createElement('span')
+                    
+                    delElm.textContent = "Delete"
+                    delElm.classList.add('delete')
+                    linkElm.textContent = obj.link
+                    linkElm.href = obj.link
+                    newDiv.classList.add('user-post')
+                    newDiv.setAttribute('id', obj._id)
+                    newDiv.textContent = obj.content
+                    newDiv.appendChild(linkElm)
+                    newDiv.appendChild(delElm)
+                    dataElm.appendChild(newDiv)
+                });
+                let delElm = document.querySelectorAll('.delete');
+                delElm.forEach(spanBtn => {
+                    spanBtn.addEventListener('click', (e) => {
+                        console.log('clciked', e.target.parentNode.id);
+                        asyncDeleteCall(e.target.parentNode.id)
+                        location.reload();
+                    })
+                });
+            }
+        }
+        getData('http://localhost:5050/showpost')
+
+        const asyncDeleteCall = async (id) => {
+            try {
+                const options = {
+                    method: 'DELETE',
+                }
+                await fetch(`http://localhost:5050/remove/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then((result) => {
+                    console.log(result);
+                }).catch(() => {
+                    console.log('Something went wrong');
+                })
+            } catch (error) {
+                console.log('DAMn didnt even try');
+            }
+        }
+
+        const asyncPostCall = async () => {
+            try {
+                const response = await fetch('http://localhost:5050/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        // your expected POST request payload goes here
+                        content: postContent.value,
+                        link: postLink.value
+                    })
+                });
+                const data = await response.json();
+                // enter you logic when the fetch is successful
+                console.log(data);
+            } catch (error) {
+                // enter your logic for when there is an error (ex. error toast)
+
+                console.log(error)
+            }
+        }
+
+
+        postBtn.addEventListener('click', (e) => {
+            e.preventDefault()
+            asyncPostCall().then(() => {
+                console.log('SUCCESS');
+                location.reload();
+            })
+        })
+        postLink.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault()
+                asyncPostCall().then(() => {
+                    console.log('SUCCESS');
+                    location.reload();
+                })
+            }
+        })
+
+    </script>
+</body>
+
+</html>
